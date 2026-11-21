@@ -164,6 +164,8 @@ Reconnect timing (from string analysis, not directly traced):
 ### 2.6.1 R3 (`KS-AP-*`) behaviour ✅
 
 - **STOP while the belt is moving is rejected**: `08 01` → `80 08 04 01` (OPERATION_FAILED), and the belt keeps running. KS Fit pauses (`08 02`), waits for 0 km/h, then sends `08 01`, which gets `80 08 01 01` and ends the session.
+- **A START can't be cancelled during its 3-2-1 countdown.** For ~4 s after `07` is accepted, Training Status counts `03 0e "3".."0"`. During that time Treadmill Data reads 0 km/h, and both PAUSE and STOP are refused (`80 08 04 02` / `80 08 04 01`). The belt then starts at 1.0 km/h anyway (FM Status `04`). This applies to starts from the remote or the app too. To halt, wait for the first frame with speed > 0, then PAUSE. On the R3 that takes ~1 s at 1 km/h. So a speed of 0 alone doesn't prove the belt will stay still.
+- **PAUSE at rest** (idle, or already paused) is refused with `80 08 04 02` and has no effect. **STOP with no session** is refused with `80 08 04 01`.
 - **CCCD writes are sometimes ignored right after connect.** No notifications arrived at all on ~2 of 6 connections. Verify that Treadmill Data is flowing and resubscribe if it isn't. KS Fit rewrites its CCCDs 3× after connecting, which may be the same workaround.
 - **Control Point indications are occasionally dropped** even when the command took effect: once, a STOP gave no `80 08 …` but the session still ended. Confirm via FM Status and Treadmill Data.
 - Unlike MC-21, the R3 sends a Control Point indication for **every** opcode. It needs no ODM pre-amble; `REQUEST_CONTROL` returns `80 00 01`.
